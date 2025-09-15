@@ -20,6 +20,36 @@ app.get("/products", async (req, res) => {
   );
 });
 
+app.post("/products", async (req, res) => {
+  const newProductDetails: {
+    img: string;
+    name: string;
+    description: string;
+    price: number;
+    initialQuantity: number;
+    category: string;
+  } = req.body;
+  const { img, name, description, category, price, initialQuantity } =
+    newProductDetails;
+
+  try {
+    await prisma.product.create({
+      data: {
+        img,
+        name,
+        description,
+        price,
+        category: category.toLowerCase(),
+        quantity: initialQuantity,
+      },
+    });
+
+    res.status(201).send("Added a product successfully!");
+  } catch {
+    res.send(500).send("Something went wrong! Please trya again");
+  }
+});
+
 app.get("/products/:id", async (req, res) => {
   res.send(
     await prisma.product.findUnique({
