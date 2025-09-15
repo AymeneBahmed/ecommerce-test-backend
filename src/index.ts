@@ -8,8 +8,16 @@ const prisma = new PrismaClient();
 
 app.use(express.json(), cors());
 
-app.get("/products", async (_req, res) => {
-  res.send(await prisma.product.findMany());
+app.get("/products", async (req, res) => {
+  const { category } = req.query;
+
+  res.send(
+    await prisma.product.findMany(
+      typeof category === "string"
+        ? { where: { category: category.toLowerCase() } }
+        : undefined
+    )
+  );
 });
 
 app.get("/products/:id", async (req, res) => {
@@ -23,7 +31,7 @@ app.get("/products/:id", async (req, res) => {
 app.listen(3000, async () => {
   await prisma.product.deleteMany();
 
-  const categories = ["Electronics", "Clothing", "Books", "Home", "Sports"];
+  const categories = ["electronics", "clothing", "books", "home", "sports"];
   const fakeProducts = Array.from({ length: 50 }, () => ({
     img: faker.helpers.arrayElement([
       "https://png.pngtree.com/png-clipart/20190516/original/pngtree-cleaning-products-on-transparent-background-png-image_4017269.jpg",
