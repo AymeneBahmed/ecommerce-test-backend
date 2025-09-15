@@ -12,6 +12,14 @@ app.get("/products", async (_req, res) => {
   res.send(await prisma.product.findMany());
 });
 
+app.get("/products/:id", async (req, res) => {
+  res.send(
+    await prisma.product.findUnique({
+      where: { id: req.params.id },
+    })
+  );
+});
+
 app.listen(3000, async () => {
   await prisma.product.deleteMany();
 
