@@ -2,11 +2,189 @@ import express from "express";
 import { PrismaClient } from "./generated/prisma/index.js";
 import { faker } from "@faker-js/faker";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 
 const app = express();
 const prisma = new PrismaClient();
 
 app.use(express.json(), cors());
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup({
+    openapi: "3.0.0",
+    info: {
+      title: "Product API",
+      description: "API for managing products with CRUD operations",
+      version: "1.0.0",
+    },
+    servers: [
+      {
+        url: "http://localhost:3000",
+        description: "Development server",
+      },
+    ],
+    paths: {
+      "/products": {
+        get: {
+          summary: "Get all products",
+          description:
+            "Retrieve a list of products, optionally filtered by category",
+          parameters: [
+            {
+              in: "query",
+              name: "category",
+              schema: {
+                type: "string",
+              },
+              required: false,
+              description: "Filter products by category",
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Successful response",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "array",
+                    items: {
+                      $ref: "#/components/schemas/Product",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        post: {
+          summary: "Create a new product",
+          description: "Add a new product to the database",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProductCreate",
+                },
+              },
+            },
+          },
+          responses: {
+            "201": {
+              description: "Product created successfully",
+            },
+            "500": {
+              description: "Internal server error",
+            },
+          },
+        },
+      },
+      "/products/{id}": {
+        get: {
+          summary: "Get product by ID",
+          description: "Retrieve a single product by its ID",
+          parameters: [
+            {
+              in: "path",
+              name: "id",
+              required: true,
+              description: "ID of the product to retrieve",
+              schema: {
+                type: "string",
+              },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Successful response",
+              content: {
+                "application/json": {
+                  schema: {
+                    $ref: "#/components/schemas/Product",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    components: {
+      schemas: {
+        Product: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+            },
+            img: {
+              type: "string",
+              format: "uri",
+            },
+            name: {
+              type: "string",
+            },
+            description: {
+              type: "string",
+            },
+            price: {
+              type: "integer",
+              minimum: 5,
+              maximum: 500,
+            },
+            quantity: {
+              type: "integer",
+            },
+            category: {
+              type: "string",
+            },
+          },
+        },
+        ProductCreate: {
+          type: "object",
+          required: [
+            "img",
+            "name",
+            "description",
+            "price",
+            "initialQuantity",
+            "category",
+          ],
+          properties: {
+            img: {
+              type: "string",
+              format: "uri",
+              description: "URL of the product image",
+            },
+            name: {
+              type: "string",
+              description: "Name of the product",
+            },
+            description: {
+              type: "string",
+              description: "Detailed description of the product",
+            },
+            price: {
+              type: "integer",
+              minimum: 5,
+              maximum: 500,
+              description: "Price of the product in whole units",
+            },
+            initialQuantity: {
+              type: "integer",
+              description: "Initial stock quantity",
+            },
+            category: {
+              type: "string",
+              description: "Product category",
+            },
+          },
+        },
+      },
+    },
+  })
+);
 
 app.get("/products", async (req, res) => {
   const { category } = req.query;
